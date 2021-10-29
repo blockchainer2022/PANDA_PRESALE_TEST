@@ -30,6 +30,7 @@ const App = () => {
   const [mintingInProgress, setMintingInProgress] = useState(false);
   const [confirmTransaction, setConfirmTransaction] = useState(false);
   const [saleLive, setSaleLive] = useState(false);
+  const [accountBalance, setAccountBalance] = useState(0);
 
   async function loadWeb3() {
     if (window.ethereum) {
@@ -42,6 +43,10 @@ const App = () => {
           method: "eth_requestAccounts",
         });
         setAccount(accounts[0]);
+        const balance = await window.web3.eth.getBalance(accounts[0]);
+        const balance_Eth = window.web3.utils.fromWei(balance, "ether");
+        console.log(balance_Eth);
+        setAccountBalance(balance_Eth);
       } catch (error) {
         if (error.code === 4001) {
           // swal("Request to access account denied!", "", "error");
@@ -138,49 +143,57 @@ const App = () => {
           if (mintCount === 0) {
             setLessMintAmountAlert(true);
           } else {
-            setConfirmTransaction(true);
             const finalPrice = Number(price) * mintCount;
-            contract.methods
-              .mintNFT(mintCount)
-              .send({ from: account, value: finalPrice })
-              .on("transactionHash", function () {
-                // swal({
-                //   title: "Minting NFT!",
-                //   icon: "info",
-                // });
-                setConfirmTransaction(false);
-                setMintingInProgress(true);
-              })
-              .on("confirmation", function () {
-                const el = document.createElement("div");
-                el.innerHTML =
-                  "View minted NFT on OpenSea : <a href='https://testnets.opensea.io/account '>View Now</a>";
+            if (finalPrice < accountBalance) {
+              setConfirmTransaction(true);
+              contract.methods
+                .mintNFT(mintCount)
+                .send({ from: account, value: finalPrice })
+                .on("transactionHash", function () {
+                  // swal({
+                  //   title: "Minting NFT!",
+                  //   icon: "info",
+                  // });
+                  setConfirmTransaction(false);
+                  setMintingInProgress(true);
+                })
+                .on("confirmation", function () {
+                  const el = document.createElement("div");
+                  el.innerHTML =
+                    "View minted NFT on OpenSea : <a href='https://testnets.opensea.io/account '>View Now</a>";
 
-                // swal({
-                //   title: "NFT Minted!",
-                //   content: el,
-                //   icon: "success",
-                // });
-                setNftMinted(true);
-                setConfirmTransaction(false);
-                setMintingInProgress(false);
-                setTimeout(() => {
-                  window.location.reload(false);
-                }, 5000);
-              })
-              .on("error", function (error, receipt) {
-                if (error.code === 4001) {
-                  // swal("Transaction Rejected!", "", "error");
-                  setTransactionRejected(true);
+                  // swal({
+                  //   title: "NFT Minted!",
+                  //   content: el,
+                  //   icon: "success",
+                  // });
+                  setNftMinted(true);
                   setConfirmTransaction(false);
                   setMintingInProgress(false);
-                } else {
-                  // swal("Transaction Failed!", "", "error");
-                  setTransactionFailed(true);
-                  setConfirmTransaction(false);
-                  setMintingInProgress(false);
-                }
+                  setTimeout(() => {
+                    window.location.reload(false);
+                  }, 5000);
+                })
+                .on("error", function (error, receipt) {
+                  if (error.code === 4001) {
+                    // swal("Transaction Rejected!", "", "error");
+                    setTransactionRejected(true);
+                    setConfirmTransaction(false);
+                    setMintingInProgress(false);
+                  } else {
+                    // swal("Transaction Failed!", "", "error");
+                    setTransactionFailed(true);
+                    setConfirmTransaction(false);
+                    setMintingInProgress(false);
+                  }
+                });
+            } else {
+              // alert("unsufficiant balance");
+              toast("You haven't sufficient balance to mint", {
+                type: "error",
+                position: toast.POSITION.BOTTOM_CENTER,
               });
+            }
           }
         } else {
           setSaleLive(true);
