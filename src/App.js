@@ -144,6 +144,19 @@ const App = () => {
             setLessMintAmountAlert(true);
           } else {
             const finalPrice = Number(price) * mintCount;
+            // console.log("finalPrice:", finalPrice);
+            // const estimateGasfee = await contract.methods
+            //   .mintNFT(mintCount)
+            //   .estimateGas({
+            //     from: account,
+            //     value: finalPrice,
+            //   });
+            // console.log(estimateGasfee, "gasfee");
+            // const lastPrice = estimateGasfee
+            //   ? finalPrice + estimateGasfee
+            //   : finalPrice;
+
+            // console.log("last price:", lastPrice);
             if (finalPrice < accountBalance) {
               setConfirmTransaction(true);
               contract.methods
@@ -189,7 +202,7 @@ const App = () => {
                 });
             } else {
               // alert("unsufficiant balance");
-              toast("You haven't sufficient balance to mint", {
+              toast("You don't have enough balance to Mint", {
                 type: "error",
                 position: toast.POSITION.BOTTOM_CENTER,
               });
